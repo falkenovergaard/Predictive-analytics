@@ -14,7 +14,7 @@ library(lubridate)
 
 
 ```{r}
-features <- read.csv2("data/stocks_most_important_features.csv", sep = ",")
+features <- read.csv2("data/stocks_most_important_features_bit_pos.csv", sep = ",")
 
 price <- read.csv2("data/BTC-USD.csv", sep=",")
 
@@ -23,14 +23,34 @@ names(features)[names(features) == "date"] <- "Date"
 features
 price
 ```
+'''
 
+'''
 ```{r Joining data}
 
 #data <- merge(data, price, by = "Date", type = "left", match = "all")
 data <- merge(features,price,by="Date")
 
-#exporttab <- merge(x=data, y=price, by.x='Date', by.y='Date', fill=-9999)
 
+#format(data$ratio..t.1., digits=2, nsmall=2)
+
+#exporttab <- merge(x=data, y=price, by.x='Date', by.y='Date', fill=-9999)
+sapply(data, class)
+
+data$ratio..t.1. = as.numeric(as.character(data$ratio..t.1.))
+data$ratio..t.2. = as.numeric(as.character(data$ratio..t.2.))
+data$ratio..t.6. = as.numeric(as.character(data$ratio..t.6.))
+data$negatives..t.2. = as.numeric(as.character(data$negatives..t.2.))
+data$negatives..t.3. = as.numeric(as.character(data$negatives..t.3.))
+data$positives..t.5. = as.numeric(as.character(data$positives..t.5.))
+data$Open = as.numeric(as.character(data$Open))
+data$High = as.numeric(as.character(data$High))
+data$Close = as.numeric(as.character(data$Close))
+data$Adj.Close = as.numeric(as.character(data$Adj.Close))
+data$Low= as.numeric(as.character(data$Low))
+
+
+data$Date = as.Date(data$Date)
 
 data
 
@@ -39,19 +59,90 @@ data
 ```{r}
 # save a numeric vector containing 72 monthly observations
 # from Jan 2009 to Dec 2014 as a time series object
-myts <- ts(data, start=c(2018, 1), end=c(2019, 5), frequency=365) 
+myts <- ts(data[,3:14], start = c(2018, 1), end = c(2019, 124), deltat = 1/365) 
 
 # subset the time series (June 2014 to December 2014)
 #myts2 <- window(myts, start=c(2014, 6), end=c(2014, 12)) 
-myts2 <- ts(data, start = decimal_date(as.Date("2018-01-02")), frequency = 365)
-# plot series
-myts2
+myts[,0]
+#head(myts)
+
+mts <- as.numeric(time(myts[,0]))
+#mts
+
+myts[,0] <- date_decimal(mts)
+myts[,0]
 ```
 
+```{r}
+autoplot(myts,facets=TRUE)
+```
+
+```{r}
+myts %>%
+  as.data.frame() %>%
+  ggplot(aes(x = ratio..t.6., y = Close)) +
+    geom_point() +
+    geom_smooth(method = "lm", se = FALSE)
+(fit_r6 <- tslm(Close ~ ratio..t.6., data = myts))
 
 
-Add a new chunk by clicking the *Insert Chunk* button on the toolbar or by pressing *Ctrl+Alt+I*.
+myts %>%
+  as.data.frame() %>%
+  ggplot(aes(x = ratio..t.2., y = Close)) +
+    geom_point() +
+    geom_smooth(method = "lm", se = FALSE)
+(fit_r2 <- tslm(Close ~ ratio..t.2., data = myts))
 
-When you save the notebook, an HTML file containing the code and output will be saved alongside it (click the *Preview* button or press *Ctrl+Shift+K* to preview the HTML file).
 
-The preview shows you a rendered HTML copy of the contents of the editor. Consequently, unlike *Knit*, *Preview* does not run any R code chunks. Instead, the output of the chunk when it was last run in the editor is displayed.
+
+myts %>%
+  as.data.frame() %>%
+  ggplot(aes(x = ratio..t.1., y = Close)) +
+    geom_point() +
+    geom_smooth(method = "lm", se = FALSE)
+(fit_r1 <- tslm(Close ~ ratio..t.1., data = myts))
+
+
+
+myts %>%
+  as.data.frame() %>%
+  ggplot(aes(x = negatives..t.3., y = Close)) +
+    geom_point() +
+    geom_smooth(method = "lm", se = FALSE)
+(fit_n3 <- tslm(Close ~ negatives..t.3., data = myts))
+
+myts %>%
+  as.data.frame() %>%
+  ggplot(aes(x = negatives..t.2., y = Close)) +
+    geom_point() +
+    geom_smooth(method = "lm", se = FALSE)
+(fit_n2 <- tslm(Close ~ negatives..t.2., data = myts))
+
+
+myts %>%
+  as.data.frame() %>%
+  ggplot(aes(x = positives..t.5., y = Close)) +
+    geom_point() +
+    geom_smooth(method = "lm", se = FALSE)
+(fit_p5 <- tslm(Close ~ positives..t.5., data = myts))
+
+
+myts %>%
+  as.data.frame() %>%
+  ggplot(aes(x = Volume, y = Close)) +
+    geom_point() +
+    geom_smooth(method = "lm", se = FALSE)
+(fit_v <- tslm(Close ~ Volume, data = myts))
+```
+```{r}
+checkresiduals(fit_n2)
+```
+
+In most cases, the p-values associated with the coefficients will be too small, and so some predictor variables will appear to be important when they are not. This is known as "spurious regression".
+
+
+An important consideration when estimating a regression with ARMA errors is that all of the variables in the model must first be stationary. Thus, we first have to check that  
+
+y_t and all of the predictors (x1_t,)
+
+ appear to be stationary. If we estimate the model when any of these are non-stationary, the estimated coefficients will not be consistent estimates (and therefore may not be meaningful).
