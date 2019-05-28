@@ -63,14 +63,11 @@ myts <- ts(data[,3:14], start = c(2018, 1), end = c(2019, 124), deltat = 1/365)
 
 # subset the time series (June 2014 to December 2014)
 #myts2 <- window(myts, start=c(2014, 6), end=c(2014, 12)) 
-myts[,0]
+#myts <
 #head(myts)
 
-mts <- as.numeric(time(myts[,0]))
+#mts <- as.numeric(time(myts[,0]))
 #mts
-
-myts[,0] <- date_decimal(mts)
-myts[,0]
 ```
 
 ```{r}
